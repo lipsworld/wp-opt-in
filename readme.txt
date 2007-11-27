@@ -17,10 +17,11 @@ IP address and time for submit is stored together with the e-mail address in the
 
 == Installation ==
 
-1. Upload `wp-opt-in.php` to the `/wp-content/plugins/` directory
-2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Place `<?php if (function_exists('wpoi_opt_in')) { wpoi_opt_in(); } ?>` in e.g. your sidebar
-4. Configure the plugin in the 'WP Opt-in' menu located under the WordPress 'Options' menu
+1. Download and unzip the plugin
+2. Upload `wp-opt-in.php` to the `/wp-content/plugins/` directory
+3. Activate the plugin through the 'Plugins' menu in WordPress
+4. Place `<?php if (function_exists('wpoi_opt_in')) { wpoi_opt_in(); } ?>` in e.g. your sidebar
+5. Configure the plugin in the 'WP Opt-in' menu located under the WordPress 'Options' menu
 
 == Frequently Asked Questions ==
 
@@ -34,7 +35,7 @@ Blind carbon copy. A receipient field for e-mail. Using it results in not reveal
 
 = Can spammers use this to get me in trouble? =
 
-Subject, sendes and contents of the e-mail sent from this plugin is controlled by the plugin and you. There should be no reason for sending someone this information unless they asked for it.
+Subject, sender and contents of the e-mail sent from this plugin is controlled by the plugin and you. There should be no reason for sending someone this information unless they asked for it.
 
 = What about security? =
 
