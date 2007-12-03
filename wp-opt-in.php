@@ -396,8 +396,8 @@ function wpoi_widget_init() {
 		// v2.2.1+
 		$size = array('width' => $width, 'height' => $height);
 		$class = array( 'classname' => 'wpoi_opt_in' ); // css classname
-		wp_register_sidebar_widget('wpoi', 'WP Opt-in', 'wpoi_widget', $class, $i);
-		wp_register_widget_control('wpoi', 'WP Opt-in', 'wpoi_widget_control', $size, $i);
+		wp_register_sidebar_widget('wpoi', 'WP Opt-in', 'wpoi_widget', $class);
+		wp_register_widget_control('wpoi', 'WP Opt-in', 'wpoi_widget_control', $size);
 	}
 }
 
