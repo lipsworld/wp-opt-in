@@ -3,7 +3,7 @@
 Plugin Name: WP Opt-in
 Plugin URI: http://neppe.no/wordpress/wp-opt-in/
 Description: Collect e-mail addresses from users, and send them an e-mail automagically. Information can be selectively deleted or exported in an e-mail Bcc friendly format.
-Version: 0.4
+Version: 0.5
 Author: Petter
 Author URI: http://neppe.no/
 */
@@ -17,12 +17,12 @@ Author URI: http://neppe.no/
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
 $wpoi_db_version = "0.1";
@@ -125,6 +125,7 @@ function wpoi_install()
 
 		// Initialise options with default values
 		$blogname = get_option('blogname');
+		add_option('wpoi_widget_title', 'WP Opt-in');
 		add_option('wpoi_email_from', get_option('admin_email') );
 		add_option('wpoi_email_subject', "[$blogname] Requested e-mail");
 		add_option('wpoi_email_message', "This is an automatically sent e-mail.\nYou received this because $blogname received a request.");
@@ -359,22 +360,33 @@ function wpoi_options()
 <?php
 }
 
-function wpoi_widget($args) {
-	extract($args);
-?>
-	<?php echo $before_widget; ?>
-	<?php echo $before_title
-		. 'WP Opt-in'
-		. $after_title; ?>
-	<?php wpoi_opt_in(); ?>
-	<?php echo $after_widget; ?>
-<?php
-}
-
-function wpoi_init_widget() {
-	if (function_exists('register_sidebar_widget')) {
-		register_sidebar_widget('WP Opt-in', 'wpoi_widget');
+function wpoi_widget_init() {
+	if (!function_exists('register_sidebar_widget')) {
+		return;
 	}
+
+	function wpoi_widget($args) {
+		extract($args);
+		echo $before_widget . $before_title;
+		echo get_option('wpoi_widget_title');
+		echo $after_title;
+		wpoi_opt_in();
+		echo $after_widget;
+	}
+
+	function wpoi_widget_control() {
+		$title = get_option('wpoi_widget_title');
+		if ($_POST['wpoi_submit']) {
+			$title = stripslashes($_POST['wpoi_widget_title']);
+			update_option('wpoi_widget_title', $title );
+		}
+		echo '<p>Title:<input  style="width: 200px;" type="text" value="';
+		echo $title . '" name="wpoi_widget_title" id="wpoi_widget_title" /></p>';
+		echo '<input type="hidden" id="wpoi_submit" name="wpoi_submit" value="1" />';
+	}
+
+	register_sidebar_widget('WP Opt-in', 'wpoi_widget');
+	register_widget_control('WP Opt-in','wpoi_widget_control', 300, 100);
 }
 
 function wpoi_add_to_menu() {
@@ -383,5 +395,5 @@ function wpoi_add_to_menu() {
 
 register_activation_hook(basename(__FILE__), 'wpoi_install');
 add_action('admin_menu', 'wpoi_add_to_menu');
-add_action('plugins_loaded', 'wpoi_init_widget', 1);
+add_action('plugins_loaded', 'wpoi_widget_init');
 ?>

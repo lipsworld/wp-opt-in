@@ -3,7 +3,7 @@ Contributors: Petter
 Tags: email, mail, plugin, sidebar, 
 Requires at least: 2.0.2
 Tested up to: 2.3.1
-Stable tag: 0.4
+Stable tag: 0.5
 
 Collect e-mail addresses from users with a simple form. Send them an e-mail automagically.
 
@@ -20,7 +20,7 @@ IP address and time for submit is stored together with the e-mail address in the
 1. Download and unzip the plugin
 2. Upload `wp-opt-in.php` to the `/wp-content/plugins/` directory
 3. Activate the plugin through the 'Plugins' menu in WordPress
-4. Place the widget in your sidebar
+4. Place the widget in your sidebar and edit its title
 5. Configure the plugin in the 'WP Opt-in' menu located under the WordPress 'Options' menu
 
 == Frequently Asked Questions ==
