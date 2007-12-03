@@ -231,7 +231,6 @@ function wpoi_options()
 <h2>WP Opt-in Options</h2>
 <form name="wpoi_form" method="post" action="">
 <input type="hidden" name="wpoi_hidden" value="SAb13c">
-
 <fieldset class="options">
 <legend>E-mail to send users on opt-in</legend>
 <table width="100%" cellspacing="2" cellpadding="5" class="optiontable editform">
@@ -239,19 +238,16 @@ function wpoi_options()
 <th width="33%" scope="row">From:</th><td>
 <input type="text" name="wpoi_email_from" id="wpoi_email_from" value="<?php echo $email_from; ?>" size="40"></td>
 </tr>
-
 <tr valign="top">
 <th width="33%" scope="row">Subject:</th><td>
 <input type="text" name="wpoi_email_subject" id="wpoi_email_subject" value="<?php echo $email_subject; ?>" size="40"></td>
 </tr>
-
 <tr valign="top">
 <th width="33%" scope="row">Message:</th><td>
 <textarea name="wpoi_email_message" id="wpoi_email_message" rows="4" cols="40"><?php echo $email_message; ?></textarea></td>
 </tr>
 </table>
 </fieldset>
-
 <fieldset class="options">
 <legend>Front side messages on opt-in</legend>
 <table width="100%" cellspacing="2" cellpadding="5" class="optiontable editform">
@@ -259,19 +255,16 @@ function wpoi_options()
 <th width="33%" scope="row">Bad e-mail:</th><td>
 <input type="text" name="wpoi_msg_bad" id="wpoi_msg_bad" value="<?php echo $msg_bad; ?>" size="40"></td>
 </tr>
-
 <tr valign="top">
 <th width="33%" scope="row">Failed to send:</th><td>
 <input type="text" name="wpoi_msg_fail" id="wpoi_msg_fail" value="<?php echo $msg_fail; ?>" size="40"></td>
 </tr>
-
 <tr valign="top">
 <th width="33%" scope="row">Success:</th><td>
 <input type="text" name="wpoi_msg_sent" id="wpoi_msg_sent" value="<?php echo $msg_sent; ?>" size="40"></td>
 </tr>
 </table>
 </fieldset>
-
 <fieldset class="options">
 <legend>Front side form appearance</legend>
 <table width="100%" cellspacing="2" cellpadding="5" class="optiontable editform">
@@ -279,30 +272,25 @@ function wpoi_options()
 <th width="33%" scope="row">Form header:</th><td>
 <textarea name="wpoi_form_header" id="wpoi_form_header" rows="4" cols="40"><?php echo $form_header; ?></textarea></td>
 </tr>
-
 <tr valign="top">
 <th width="33%" scope="row">Form footer:</th><td>
 <textarea name="wpoi_form_footer" id="wpoi_form_footer" rows="2" cols="40"><?php echo $form_footer; ?></textarea></td>
 </tr>
-
 <tr valign="top">
 <th width="33%" scope="row">E-mail field:</th><td>
 <input type="text" name="wpoi_form_email" id="wpoi_form_email" value="<?php echo $form_email; ?>" size="40"></td>
 </tr>
-
 <tr valign="top">
 <th width="33%" scope="row">Submit button:</th><td>
 <input type="text" name="wpoi_form_send" id="wpoi_form_send" value="<?php echo $form_send; ?>" size="40"></td>
 </tr>
 </table>
 </fieldset>
-
 <p class="submit">
 <input type="submit" name="Submit" value="Update Options &raquo;" />
 </p>
 </form>
 </div>
-
 <div class="wrap">
 <h2>Opted-in users</h2>
 <h3>Bcc friendly format</h3>
@@ -319,7 +307,6 @@ function wpoi_options()
 	}
 ?>
 </p>
-
 <h3>All details</h3>
 <table class="widefat">
 <thead>
