@@ -3,7 +3,7 @@
 Plugin Name: WP Opt-in
 Plugin URI: http://neppe.no/wordpress/wp-opt-in/
 Description: Collect e-mail addresses from users, and send them an e-mail automagically. Information can be selectively deleted or exported in an e-mail Bcc friendly format.
-Version: 0.5
+Version: 0.6
 Author: Petter
 Author URI: http://neppe.no/
 */
@@ -361,6 +361,8 @@ function wpoi_options()
 }
 
 function wpoi_widget_init() {
+	global $wp_version;
+
 	if (!function_exists('register_sidebar_widget')) {
 		return;
 	}
@@ -385,8 +387,18 @@ function wpoi_widget_init() {
 		echo '<input type="hidden" id="wpoi_submit" name="wpoi_submit" value="1" />';
 	}
 
-	register_sidebar_widget('WP Opt-in', 'wpoi_widget');
-	register_widget_control('WP Opt-in','wpoi_widget_control', 300, 100);
+	$width = 300;
+	$height = 100;
+	if ( '2.2' == $wp_version || (!function_exists( 'wp_register_sidebar_widget' ))) {
+		register_sidebar_widget('WP Opt-in', 'wpoi_widget');
+		register_widget_control('WP Opt-in', 'wpoi_widget_control', $width, $height);
+	} else {
+		// v2.2.1+
+		$size = array('width' => $width, 'height' => $height);
+		$class = array( 'classname' => 'wpoi_opt_in' ); // css classname
+		wp_register_sidebar_widget('wpoi', 'WP Opt-in', 'wpoi_widget', $class, $i);
+		wp_register_widget_control('wpoi', 'WP Opt-in', 'wpoi_widget_control', $size, $i);
+	}
 }
 
 function wpoi_add_to_menu() {
