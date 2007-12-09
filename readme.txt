@@ -3,7 +3,7 @@ Contributors: Petter
 Tags: email, mail, plugin, sidebar, 
 Requires at least: 2.0.2
 Tested up to: 2.3.1
-Stable tag: 0.6
+Stable tag: 0.7
 
 Collect e-mail addresses from users with a simple form. Send them an e-mail automagically.
 
