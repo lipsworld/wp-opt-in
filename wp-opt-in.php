@@ -3,7 +3,7 @@
 Plugin Name: WP Opt-in
 Plugin URI: http://neppe.no/wordpress/wp-opt-in/
 Description: Collect e-mail addresses from users, and send them an e-mail automagically. Information can be selectively deleted or exported in an e-mail Bcc friendly format.
-Version: 0.7
+Version: 0.8
 Author: Petter
 Author URI: http://neppe.no/
 */
@@ -26,7 +26,6 @@ Author URI: http://neppe.no/
 */
 
 $wpoi_db_version = "0.1";
-$wpoi_db_users = $wpdb->prefix . "wpoi_users";
 
 function wpoi_show_form()
 {
@@ -63,7 +62,7 @@ function wpoi_getip()
 function wpoi_opt_in()
 {
 	global $wpdb;
-	global $wpoi_db_users;
+	$table_users = $wpdb->prefix . "wpoi_users";
 
 	echo stripslashes(get_option('wpoi_form_header'));
 
@@ -85,7 +84,7 @@ function wpoi_opt_in()
 		}
 		elseif (mail($email,$subject,$message,$headers)) {
 			// Write new user to database
-			$insert = "INSERT INTO " . $wpoi_db_users .
+			$insert = "INSERT INTO " . $table_users .
 				" (time, ip, email) " . "VALUES ('" . time() .
 				"','" . wpoi_getip() . "','" . $email . "')";
 		 	$result = $wpdb->query($insert);
@@ -102,11 +101,12 @@ function wpoi_install()
 {
 	global $wpdb;
 	global $wpoi_db_version;
-	global $wpoi_db_users;
 
-	if($wpdb->get_var("SHOW TABLES LIKE '$wpoi_db_users'") != $wpoi_db_users) {
+	$table_users = $wpdb->prefix . "wpoi_users";
+
+	if($wpdb->get_var("show tables like '$table_users'") != $table_users) {
 		// Table did not excist; create new
-		$sql = "CREATE TABLE " . $wpoi_db_users . " (
+		$sql = "CREATE TABLE " . $table_users . " (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			time bigint(11) DEFAULT '0' NOT NULL,
 			ip varchar(50) NOT NULL,
@@ -117,7 +117,7 @@ function wpoi_install()
 		dbDelta($sql);
 
 		// Insert initial data in table
-		$insert = "INSERT INTO $wpoi_db_users (time, ip, email) " .
+		$insert = "INSERT INTO $table_users (time, ip, email) " .
 			"VALUES ('" . time() . "','" . wpoi_getip() .
 			"','" . get_option('admin_email') . "')";
 		$result = $wpdb->query($insert);
@@ -160,14 +160,14 @@ function wpoi_install()
 function wpoi_options()
 {
 	global $wpdb;
-	global $wpoi_db_users;
+	$table_users = $wpdb->prefix . "wpoi_users";
 
 	// Handle options from get method information
 	if (isset($_GET['user_id'])) {
 		$user_id = $_GET['user_id'];
 
 		// Delete user from database
-		$delete = "DELETE FROM " . $wpoi_db_users .
+		$delete = "DELETE FROM " . $table_users .
 				" WHERE id = '" . $user_id . "'";
 		$result = $wpdb->query($delete);
 
@@ -296,7 +296,7 @@ function wpoi_options()
 <h3>Bcc friendly format</h3>
 <p>
 <?php
-	$users = $wpdb->get_results("SELECT * FROM `$wpoi_db_users` ORDER BY id DESC");
+	$users = $wpdb->get_results("SELECT * FROM $table_users ORDER BY id DESC");
 	$additional_user=0;
 	foreach ($users as $user) {
 		if ($additional_user) {
@@ -321,7 +321,6 @@ function wpoi_options()
 </thead>
 <tbody>
 <?php
-	$users = $wpdb->get_results("SELECT * FROM `$wpoi_db_users` ORDER BY id DESC");
 	$user_no=0;
 	$url = get_bloginfo('wpurl') . '/wp-admin/options-general.php?page=' .
 		basename(__FILE__) . '&user_id=';
@@ -392,7 +391,7 @@ function wpoi_add_to_menu() {
 	add_options_page('WP Opt-in Options', 'WP Opt-in', 7, __FILE__, 'wpoi_options' );
 }
 
-register_activation_hook(basename(__FILE__), 'wpoi_install');
+register_activation_hook(__FILE__, 'wpoi_install');
 add_action('admin_menu', 'wpoi_add_to_menu');
 add_action('plugins_loaded', 'wpoi_widget_init');
 ?>
