@@ -3,7 +3,7 @@
 Plugin Name: WP Opt-in
 Plugin URI: http://neppe.no/wordpress/wp-opt-in/
 Description: Collect e-mail addresses from users, and send them an e-mail automagically. Information can be selectively deleted or exported in an e-mail Bcc friendly format.
-Version: 0.9
+Version: 0.9.1
 Author: Petter
 Author URI: http://neppe.no/
 */
@@ -400,3 +400,4 @@ register_activation_hook(__FILE__, 'wpoi_install');
 add_action('admin_menu', 'wpoi_add_to_menu');
 add_action('plugins_loaded', 'wpoi_widget_init');
 ?>
+
