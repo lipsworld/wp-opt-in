@@ -3,12 +3,12 @@
 Plugin Name: WP Opt-in
 Plugin URI: http://neppe.no/wordpress/wp-opt-in/
 Description: Collect e-mail addresses from users, and send them an e-mail automagically. Information can be selectively deleted or exported in an e-mail Bcc friendly format.
-Version: 0.9
+Version: 1.0
 Author: Petter
 Author URI: http://neppe.no/
 */
 
-/*  Copyright 2007 Petter (http://neppe.no/)
+/*  Copyright 2008 Petter (http://neppe.no/)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,17 +23,47 @@ Author URI: http://neppe.no/
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+
+
+Issues and feature request list:
+- Add new admin-page for writing e-mail to all opt'ed in users 
+- Replace mail() with wp_mail() for better support of other mail plugins 
+- Make it possible to place the php file in either a wp-opt-in folder or the plugins folder 
+- Add option for file attachment in the e-mail 
+- Support sending of HTML e-mail 
+- Name field in the opt-in form, and possibility to enable/disable it 
+- Support for custom defined opt-in form
+
+Implemented stuff:
+- Option to send notification e-mail to e.g. admin on subscription
+- Actually use the Form footer field
+- Functionality to seamlessly upgrade the database options through versions
+
+Won't fix with rationale:
+- Add export e-mail addresses to file possibility -> copy from bcc field and paste into file should be simple
+
+
+Option to enable/disable stuff in a form:
+<input type="checkbox" name="abc" id="abc" checked="checked"/>
+<input type="checkbox" name="abc" id="abc"/>
+if ( isset($post['abc'])) {
+	$chk = ' checked="checked"';
+} else {
+	$chk = '';
+}
+
+Location for more php mail details:
+http://www.sitepoint.com/print/advanced-email-php
 */
 
-$wpoi_db_version = "0.1";
+$wpoi_db_version = "0.2";
 
 function wpoi_show_form()
 {
-//	echo '<form action="' . get_permalink() . '" method="post">' . "\n";
 	echo '<form action="" method="post">' . "\n";
-	echo '<p>' . get_option('wpoi_form_email');
+	echo '<p>' . wpoi_get_option('wpoi_form_email');
 	echo ' <input type="text" name="wpoi_email" id="wpoi_email" /></p>' . "\n";
-	echo '<p><input type="submit" value="' . get_option('wpoi_form_send');
+	echo '<p><input type="submit" value="' . wpoi_get_option('wpoi_form_send');
 	echo '" /></p>' . "\n</form>\n<!-- Made by WP Opt-in -->\n";
 }
 
@@ -64,42 +94,48 @@ function wpoi_opt_in()
 	global $wpdb;
 	$table_users = $wpdb->prefix . "wpoi_users";
 
-	echo stripslashes(get_option('wpoi_form_header'));
+	echo stripslashes(wpoi_get_option('wpoi_form_header'));
 
 	$_POST['wpoi_email'] = trim($_POST['wpoi_email']);
 	if(empty($_POST['wpoi_email'])) {
 		wpoi_show_form();
 	} else {
 		$email = stripslashes($_POST['wpoi_email']);
-		$email_from = stripslashes(get_option('wpoi_email_from'));
-		$subject = stripslashes(get_option('wpoi_email_subject'));
-		$message = stripslashes(get_option('wpoi_email_message'));
-		$headers = "MIME-Version: 1.0\n";
-		$headers .= "From: $email_from\n";
+		$email_from = stripslashes(wpoi_get_option('wpoi_email_from'));
+		$subject = stripslashes(wpoi_get_option('wpoi_email_subject'));
+		$message = stripslashes(wpoi_get_option('wpoi_email_message'));
+		$email_notify = stripslashes(wpoi_get_option('wpoi_email_notify'));
+		$headers = "From: $email_from\n";
+		$headers .= "X-Mailer: WP Opt-in\n";
+		$headers .= "MIME-Version: 1.0\n";
 		$headers .= "Content-Type: text/plain; charset=\"" . get_settings('blog_charset') . "\"\n";
+//		$headers .= "Content-Type: text/html; charset=\"" . get_settings('blog_charset') . "\"\n";
 
 		if (!preg_match("/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/", $email)) {
-			echo stripslashes(get_option('wpoi_msg_bad'));
+			echo stripslashes(wpoi_get_option('wpoi_msg_bad'));
 			wpoi_show_form();
 		}
-		elseif (mail($email,$subject,$message,$headers)) {
+		elseif (mail($email, $subject, $message, "To: $email\n$headers")) {
 			// Delete user if already present
 			$delete = "DELETE FROM " . $table_users .
 					" WHERE email = '" . $email . "'";
 			$result = $wpdb->query($delete);
 
 			// Write new user to database
+			$ip = wpoi_getip();
 			$insert = "INSERT INTO " . $table_users .
 				" (time, ip, email) " . "VALUES ('" . time() .
-				"','" . wpoi_getip() . "','" . $email . "')";
+				"','" . $ip . "','" . $email . "')";
 		 	$result = $wpdb->query($insert);
-			echo stripslashes(get_option('wpoi_msg_sent'));
+			echo stripslashes(wpoi_get_option('wpoi_msg_sent'));
+			if ($email_notify != '') {
+				mail($email_notify, "WP Opt-in notification", "Password sent to new address\nE-mail: $email\nIP: $ip", "To: $email_notify\n$headers");
+			}
 		} else {
-			echo stripslashes(get_option('wpoi_msg_fail'));
+			echo stripslashes(wpoi_get_option('wpoi_msg_fail'));
 		}
 	}
-
-	echo '</div>' . "\n";
+	echo stripslashes(wpoi_get_option('wpoi_form_footer')) . "\n";
 }
 
 function wpoi_install()
@@ -109,8 +145,9 @@ function wpoi_install()
 
 	$table_users = $wpdb->prefix . "wpoi_users";
 
-	if($wpdb->get_var("show tables like '$table_users'") != $table_users) {
-		// Table did not excist; create new
+	if(($wpdb->get_var("show tables like '$table_users'") != $table_users) ||
+       (wpoi_get_option("wpoi_db_version") != $wpoi_db_version)) {
+		// No configuration detaTable did not excist or ; create new
 		$sql = "CREATE TABLE " . $table_users . " (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			time bigint(11) DEFAULT '0' NOT NULL,
@@ -126,40 +163,67 @@ function wpoi_install()
 			"VALUES ('" . time() . "','" . wpoi_getip() .
 			"','" . get_option('admin_email') . "')";
 		$result = $wpdb->query($insert);
-		add_option("wpoi_db_version", $wpoi_db_version);
+		wpoi_add_update_option("wpoi_db_version", $wpoi_db_version);
 
 		// Initialise options with default values
-		$blogname = get_option('blogname');
-		add_option('wpoi_widget_title', 'WP Opt-in');
-		add_option('wpoi_email_from', get_option('admin_email') );
-		add_option('wpoi_email_subject', "[$blogname] Requested e-mail");
-		add_option('wpoi_email_message', "This is an automatically sent e-mail.\nYou received this because $blogname received a request.");
+		wpoi_add_option('wpoi_widget_title');
+		wpoi_add_option('wpoi_email_from');
+		wpoi_add_option('wpoi_email_subject');
+		wpoi_add_option('wpoi_email_message');
+		wpoi_add_option('wpoi_email_notify');
 
-		add_option('wpoi_msg_bad', "<p><b>Bad e-mail address.</b></p>");
-		add_option('wpoi_msg_fail', "<p><b>Failed sending to e-mail address.</b></p>");
-		add_option('wpoi_msg_sent', "<p><b>Sent requested e-mail.</b></p>");
+		wpoi_add_option('wpoi_msg_bad');
+		wpoi_add_option('wpoi_msg_fail');
+		wpoi_add_option('wpoi_msg_sent');
 
-		add_option('wpoi_form_header', "<div class=\"widget module\">Receive information automagically here.");
-		add_option('wpoi_form_footer', "</div>");
-		add_option('wpoi_form_email', "E-mail:");
-		add_option('wpoi_form_send', "Submit");
+		wpoi_add_option('wpoi_form_header');
+		wpoi_add_option('wpoi_form_footer');
+		wpoi_add_option('wpoi_form_email');
+		wpoi_add_option('wpoi_form_send');
 	}
-/*
-	if (get_option("wpoi_db_version") != $wpoi_db_version) {
-		// Create new table structure
-		$sql = "CREATE TABLE " . $table . " (
-			id mediumint(9) NOT NULL AUTO_INCREMENT,
-			time bigint(11) DEFAULT '0' NOT NULL,
-			ip varchar(50) NOT NULL,
-			email varchar(50) NOT NULL,
-			UNIQUE KEY id (id)
-		);";
-		require_once(ABSPATH . 'wp-admin/upgrade-functions.php');
-		dbDelta($sql);
+}
 
-		update_option("wpoi_db_version", $wpoi_db_version);
+function wpoi_add_option($option_name)
+{
+//	if ( !get_option($option_name) ) {
+		add_option($option_name, wpoi_get_option($option_name));
+//	}
+}
+
+function wpoi_add_update_option($option_name, $option_value)
+{
+/*	if ( get_option($option_name) ) {
+		update_option($option_name, $option_value);
+	} else {
+		add_option($option_name, $option_value);
+	}*/
+	add_option($option_name, $option_value);
+	update_option($option_name, $option_value);
+}
+
+function wpoi_get_option($option_name)
+{
+	$opt = get_option($option_name);
+	if ( $opt ) {
+		return $opt;
 	}
-*/
+	$blogname = get_option('blogname');
+
+	if ($option_name=='wpoi_widget_title') { return 'WP Opt-in'; }
+	if ($option_name=='wpoi_email_from') { return get_option('admin_email'); }
+	if ($option_name=='wpoi_email_subject') { return "[$blogname] Requested e-mail"; }
+	if ($option_name=='wpoi_email_message') { return "This is an automatically sent e-mail.\nYou received this because $blogname received a request."; }
+	if ($option_name=='wpoi_email_notify') { return ''; }
+
+	if ($option_name=='wpoi_msg_bad') { return "<p><b>Bad e-mail address.</b></p>"; }
+	if ($option_name=='wpoi_msg_fail') { return "<p><b>Failed sending to e-mail address.</b></p>"; }
+	if ($option_name=='wpoi_msg_sent') { return "<p><b>Sent requested e-mail.</b></p>"; }
+
+	if ($option_name=='wpoi_form_header') { return "<div class=\"widget module\">Receive information automagically here."; }
+	if ($option_name=='wpoi_form_footer') { return "</div>"; }
+	if ($option_name=='wpoi_form_email') { return "E-mail:"; }
+	if ($option_name=='wpoi_form_send') { return "Submit"; }
+	if ($option_name=='wpoi_db_version') { return "0.0"; }
 }
 
 function wpoi_options()
@@ -183,18 +247,19 @@ function wpoi_options()
 	}
 
 	// Get current options from database
-	$email_from = stripslashes(get_option('wpoi_email_from'));
-	$email_subject = stripslashes(get_option('wpoi_email_subject'));
-	$email_message = stripslashes(get_option('wpoi_email_message'));
+	$email_from = stripslashes(wpoi_get_option('wpoi_email_from'));
+	$email_subject = stripslashes(wpoi_get_option('wpoi_email_subject'));
+	$email_message = stripslashes(wpoi_get_option('wpoi_email_message'));
+	$email_notify = stripslashes(wpoi_get_option('wpoi_email_notify'));
 
-	$msg_bad = stripslashes(get_option('wpoi_msg_bad'));
-	$msg_fail = stripslashes(get_option('wpoi_msg_fail'));
-	$msg_sent = stripslashes(get_option('wpoi_msg_sent'));
+	$msg_bad = stripslashes(wpoi_get_option('wpoi_msg_bad'));
+	$msg_fail = stripslashes(wpoi_get_option('wpoi_msg_fail'));
+	$msg_sent = stripslashes(wpoi_get_option('wpoi_msg_sent'));
 
-	$form_header = stripslashes(get_option('wpoi_form_header'));
-	$form_footer = stripslashes(get_option('wpoi_form_footer'));
-	$form_email = stripslashes(get_option('wpoi_form_email'));
-	$form_send = stripslashes(get_option('wpoi_form_send'));
+	$form_header = stripslashes(wpoi_get_option('wpoi_form_header'));
+	$form_footer = stripslashes(wpoi_get_option('wpoi_form_footer'));
+	$form_email = stripslashes(wpoi_get_option('wpoi_form_email'));
+	$form_send = stripslashes(wpoi_get_option('wpoi_form_send'));
 
 	// Update options if user posted new information
 	if( $_POST['wpoi_hidden'] == 'SAb13c' ) {
@@ -202,6 +267,7 @@ function wpoi_options()
 		$email_from = stripslashes($_POST['wpoi_email_from']);
 		$email_subject = stripslashes($_POST['wpoi_email_subject']);
 		$email_message = stripslashes($_POST['wpoi_email_message']);
+		$email_notify = stripslashes($_POST['wpoi_email_notify']);
 
 		$msg_bad = stripslashes($_POST['wpoi_msg_bad']);
 		$msg_fail = stripslashes($_POST['wpoi_msg_fail']);
@@ -213,18 +279,19 @@ function wpoi_options()
 		$form_send = stripslashes($_POST['wpoi_form_send']);
 
 		// Save to database
-		update_option('wpoi_email_from', $email_from );
-		update_option('wpoi_email_subject', $email_subject);
-		update_option('wpoi_email_message', $email_message);
+		wpoi_add_update_option('wpoi_email_from', $email_from );
+		wpoi_add_update_option('wpoi_email_subject', $email_subject);
+		wpoi_add_update_option('wpoi_email_message', $email_message);
+		wpoi_add_update_option('wpoi_email_notify', $email_notify );
 
-		update_option('wpoi_msg_bad', $msg_bad);
-		update_option('wpoi_msg_fail', $msg_fail);
-		update_option('wpoi_msg_sent', $msg_sent);
+		wpoi_add_update_option('wpoi_msg_bad', $msg_bad);
+		wpoi_add_update_option('wpoi_msg_fail', $msg_fail);
+		wpoi_add_update_option('wpoi_msg_sent', $msg_sent);
 
-		update_option('wpoi_form_header', $form_header);
-		update_option('wpoi_form_footer', $form_footer);
-		update_option('wpoi_form_email', $form_email);
-		update_option('wpoi_form_send', $form_send);
+		wpoi_add_update_option('wpoi_form_header', $form_header);
+		wpoi_add_update_option('wpoi_form_footer', $form_footer);
+		wpoi_add_update_option('wpoi_form_email', $form_email);
+		wpoi_add_update_option('wpoi_form_send', $form_send);
 
 		// Notify admin of change
 		echo '<div id="message" class="updated fade"><p><strong>';
@@ -241,15 +308,19 @@ function wpoi_options()
 <table width="100%" cellspacing="2" cellpadding="5" class="optiontable editform">
 <tr valign="top">
 <th width="33%" scope="row">From:</th><td>
-<input type="text" name="wpoi_email_from" id="wpoi_email_from" value="<?php echo $email_from; ?>" size="40"></td>
+<input type="text" name="wpoi_email_from" id="wpoi_email_from" value="<?php echo $email_from; ?>" size="40"></td><td>Only <i>user@domain.tld</i> format is allowed.</td>
 </tr>
 <tr valign="top">
-<th width="33%" scope="row">Subject:</th><td>
+<th width="33%" scope="row">Subject:</th><td colspan="2">
 <input type="text" name="wpoi_email_subject" id="wpoi_email_subject" value="<?php echo $email_subject; ?>" size="40"></td>
 </tr>
 <tr valign="top">
-<th width="33%" scope="row">Message:</th><td>
+<th width="33%" scope="row">Message:</th><td colspan="2">
 <textarea name="wpoi_email_message" id="wpoi_email_message" rows="4" cols="40"><?php echo $email_message; ?></textarea></td>
+</tr>
+<tr valign="top">
+<th width="33%" scope="row">Notify:</th><td>
+<input type="text" name="wpoi_email_notify" id="wpoi_email_notify" value="<?php echo $email_notify; ?>" size="40"></td><td>Also notify to this email when someone opt-in. Leave blank for no notification.</td>
 </tr>
 </table>
 </fieldset>
@@ -361,17 +432,17 @@ function wpoi_widget_init() {
 	function wpoi_widget($args) {
 		extract($args);
 		echo $before_widget . $before_title;
-		echo get_option('wpoi_widget_title');
+		echo wpoi_get_option('wpoi_widget_title');
 		echo $after_title;
 		wpoi_opt_in();
 		echo $after_widget;
 	}
 
 	function wpoi_widget_control() {
-		$title = get_option('wpoi_widget_title');
+		$title = wpoi_get_option('wpoi_widget_title');
 		if ($_POST['wpoi_submit']) {
 			$title = stripslashes($_POST['wpoi_widget_title']);
-			update_option('wpoi_widget_title', $title );
+			wpoi_add_update_option('wpoi_widget_title', $title );
 		}
 		echo '<p>Title:<input  style="width: 200px;" type="text" value="';
 		echo $title . '" name="wpoi_widget_title" id="wpoi_widget_title" /></p>';
@@ -380,7 +451,7 @@ function wpoi_widget_init() {
 
 	$width = 300;
 	$height = 100;
-	if ( '2.2' == $wp_version || (!function_exists( 'wp_register_sidebar_widget' ))) {
+	if ( ('2.2' == $wp_version) || (!function_exists( 'wp_register_sidebar_widget' ))) {
 		register_sidebar_widget('WP Opt-in', 'wpoi_widget');
 		register_widget_control('WP Opt-in', 'wpoi_widget_control', $width, $height);
 	} else {
