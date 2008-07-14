@@ -3,7 +3,7 @@
 Plugin Name: WP Opt-in
 Plugin URI: http://neppe.no/wordpress/wp-opt-in/
 Description: Collect e-mail addresses from users, and send them an e-mail automagically. Information can be selectively deleted or exported in an e-mail Bcc friendly format.
-Version: 1.0
+Version: 1.1
 Author: Petter
 Author URI: http://neppe.no/
 */
@@ -104,18 +104,20 @@ function wpoi_opt_in()
 		$email_from = stripslashes(wpoi_get_option('wpoi_email_from'));
 		$subject = stripslashes(wpoi_get_option('wpoi_email_subject'));
 		$message = stripslashes(wpoi_get_option('wpoi_email_message'));
+		$message = wordwrap($message, 70);
 		$email_notify = stripslashes(wpoi_get_option('wpoi_email_notify'));
-		$headers = "From: $email_from\n";
-		$headers .= "X-Mailer: WP Opt-in\n";
-		$headers .= "MIME-Version: 1.0\n";
-		$headers .= "Content-Type: text/plain; charset=\"" . get_settings('blog_charset') . "\"\n";
-//		$headers .= "Content-Type: text/html; charset=\"" . get_settings('blog_charset') . "\"\n";
+		$headers = "From: $email_from\r\n";
+		$headers .= "X-Mailer: WP Opt-in\r\n";
+		$headers .= "MIME-Version: 1.0\r\n";
+		$headers .= "Content-Type: text/plain; charset=\"" . get_settings('blog_charset') . "\"\r\n";
+//		$headers .= "Content-Type: text/html; charset=\"" . get_settings('blog_charset') . "\"\r\n";
+		$headers .= "Message-ID: <".md5(uniqid(rand(),true))."@".$_SERVER['SERVER_NAME'].">\r\n";
 
 		if (!preg_match("/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/", $email)) {
 			echo stripslashes(wpoi_get_option('wpoi_msg_bad'));
 			wpoi_show_form();
 		}
-		elseif (mail($email, $subject, $message, "To: $email\n$headers")) {
+		elseif (mail($email, $subject, $message, "To: $email\r\n$headers")) {
 			// Delete user if already present
 			$delete = "DELETE FROM " . $table_users .
 					" WHERE email = '" . $email . "'";
@@ -129,7 +131,7 @@ function wpoi_opt_in()
 		 	$result = $wpdb->query($insert);
 			echo stripslashes(wpoi_get_option('wpoi_msg_sent'));
 			if ($email_notify != '') {
-				mail($email_notify, "WP Opt-in notification", "Password sent to new address\nE-mail: $email\nIP: $ip", "To: $email_notify\n$headers");
+				mail($email_notify, "WP Opt-in notification", "Password sent to new address\nE-mail: $email\nIP: $ip", "To: $email_notify\r\n$headers");
 			}
 		} else {
 			echo stripslashes(wpoi_get_option('wpoi_msg_fail'));
