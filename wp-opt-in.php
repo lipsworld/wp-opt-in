@@ -3,7 +3,7 @@
 Plugin Name: WP Opt-in
 Plugin URI: http://neppe.no/wordpress/wp-opt-in/
 Description: Collect e-mail addresses from users, and send them an e-mail automagically. Information can be selectively deleted or exported in an e-mail Bcc friendly format.
-Version: 1.1
+Version: 1.2
 Author: Petter
 Author URI: http://neppe.no/
 */
@@ -100,24 +100,35 @@ function wpoi_opt_in()
 	if(empty($_POST['wpoi_email'])) {
 		wpoi_show_form();
 	} else {
+		// Linux and Windows compatibility
+		if (!defined('PHP_EOL')) {
+			if ( strtoupper(substr(PHP_OS,0,3) == 'WIN' ) ) {
+				$lf = "\r\n";
+			} else {
+				$lf = "\n";
+			}
+		} else {
+			$lf = PHP_EOL;
+		}
+
 		$email = stripslashes($_POST['wpoi_email']);
 		$email_from = stripslashes(wpoi_get_option('wpoi_email_from'));
 		$subject = stripslashes(wpoi_get_option('wpoi_email_subject'));
 		$message = stripslashes(wpoi_get_option('wpoi_email_message'));
 		$message = wordwrap($message, 70);
 		$email_notify = stripslashes(wpoi_get_option('wpoi_email_notify'));
-		$headers = "From: $email_from\r\n";
-		$headers .= "X-Mailer: WP Opt-in\r\n";
-		$headers .= "MIME-Version: 1.0\r\n";
-		$headers .= "Content-Type: text/plain; charset=\"" . get_settings('blog_charset') . "\"\r\n";
-//		$headers .= "Content-Type: text/html; charset=\"" . get_settings('blog_charset') . "\"\r\n";
-		$headers .= "Message-ID: <".md5(uniqid(rand(),true))."@".$_SERVER['SERVER_NAME'].">\r\n";
+		$headers = "From: ".$email_from.$lf;
+		$headers .= "X-Mailer: WP Opt-in".$lf;
+		$headers .= "MIME-Version: 1.0".$lf;
+		$headers .= "Content-Type: text/plain; charset=\"" . get_settings('blog_charset') . "\"" . $lf;
+//		$headers .= "Content-Type: text/html; charset=\"" . get_settings('blog_charset') . "\"" . $lf;
+		$headers .= "Message-ID: <".md5(uniqid(rand(),true))."@".$_SERVER['SERVER_NAME'].">".$lf;
 
 		if (!preg_match("/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/", $email)) {
 			echo stripslashes(wpoi_get_option('wpoi_msg_bad'));
 			wpoi_show_form();
 		}
-		elseif (mail($email, $subject, $message, "To: $email\r\n$headers")) {
+		elseif (mail($email, $subject, $message, "To: ".$email.$lf.$headers)) {
 			// Delete user if already present
 			$delete = "DELETE FROM " . $table_users .
 					" WHERE email = '" . $email . "'";
@@ -131,7 +142,7 @@ function wpoi_opt_in()
 		 	$result = $wpdb->query($insert);
 			echo stripslashes(wpoi_get_option('wpoi_msg_sent'));
 			if ($email_notify != '') {
-				mail($email_notify, "WP Opt-in notification", "Password sent to new address\nE-mail: $email\nIP: $ip", "To: $email_notify\r\n$headers");
+				mail($email_notify, "WP Opt-in notification", "Password sent to new address".$lf."E-mail: ".$email.$lf."IP: $ip".$lf, "To: ".$email_notify.$lf.$headers);
 			}
 		} else {
 			echo stripslashes(wpoi_get_option('wpoi_msg_fail'));
