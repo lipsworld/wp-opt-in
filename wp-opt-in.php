@@ -3,7 +3,7 @@
 Plugin Name: WP Opt-in
 Plugin URI: http://neppe.no/wordpress/wp-opt-in/
 Description: Collect e-mail addresses from users, and send them an e-mail automagically. Information can be selectively deleted or exported in an e-mail Bcc friendly format.
-Version: 1.1
+Version: 1.3
 Author: Petter
 Author URI: http://neppe.no/
 */
@@ -28,13 +28,13 @@ Author URI: http://neppe.no/
 Issues and feature request list:
 - Add new admin-page for writing e-mail to all opt'ed in users 
 - Replace mail() with wp_mail() for better support of other mail plugins 
-- Make it possible to place the php file in either a wp-opt-in folder or the plugins folder 
 - Add option for file attachment in the e-mail 
 - Support sending of HTML e-mail 
 - Name field in the opt-in form, and possibility to enable/disable it 
 - Support for custom defined opt-in form
 
 Implemented stuff:
+- Make it possible to place the php file in either a wp-opt-in folder or the plugins folder 
 - Option to send notification e-mail to e.g. admin on subscription
 - Actually use the Form footer field
 - Functionality to seamlessly upgrade the database options through versions
@@ -100,24 +100,35 @@ function wpoi_opt_in()
 	if(empty($_POST['wpoi_email'])) {
 		wpoi_show_form();
 	} else {
+		// Linux and Windows compatibility
+		if (!defined('PHP_EOL')) {
+			if ( strtoupper(substr(PHP_OS,0,3) == 'WIN' ) ) {
+				$lf = "\r\n";
+			} else {
+				$lf = "\n";
+			}
+		} else {
+			$lf = PHP_EOL;
+		}
+
 		$email = stripslashes($_POST['wpoi_email']);
 		$email_from = stripslashes(wpoi_get_option('wpoi_email_from'));
 		$subject = stripslashes(wpoi_get_option('wpoi_email_subject'));
 		$message = stripslashes(wpoi_get_option('wpoi_email_message'));
 		$message = wordwrap($message, 70);
 		$email_notify = stripslashes(wpoi_get_option('wpoi_email_notify'));
-		$headers = "From: $email_from\r\n";
-		$headers .= "X-Mailer: WP Opt-in\r\n";
-		$headers .= "MIME-Version: 1.0\r\n";
-		$headers .= "Content-Type: text/plain; charset=\"" . get_settings('blog_charset') . "\"\r\n";
-//		$headers .= "Content-Type: text/html; charset=\"" . get_settings('blog_charset') . "\"\r\n";
-		$headers .= "Message-ID: <".md5(uniqid(rand(),true))."@".$_SERVER['SERVER_NAME'].">\r\n";
+		$headers = "From: ".$email_from.$lf;
+		$headers .= "X-Mailer: WP Opt-in".$lf;
+		$headers .= "MIME-Version: 1.0".$lf;
+		$headers .= "Content-Type: text/plain; charset=\"" . get_settings('blog_charset') . "\"" . $lf;
+//		$headers .= "Content-Type: text/html; charset=\"" . get_settings('blog_charset') . "\"" . $lf;
+		$headers .= "Message-ID: <".md5(uniqid(rand(),true))."@".$_SERVER['SERVER_NAME'].">".$lf;
 
 		if (!preg_match("/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/", $email)) {
 			echo stripslashes(wpoi_get_option('wpoi_msg_bad'));
 			wpoi_show_form();
 		}
-		elseif (mail($email, $subject, $message, "To: $email\r\n$headers")) {
+		elseif (mail($email, $subject, $message, "To: ".$email.$lf.$headers)) {
 			// Delete user if already present
 			$delete = "DELETE FROM " . $table_users .
 					" WHERE email = '" . $email . "'";
@@ -131,7 +142,7 @@ function wpoi_opt_in()
 		 	$result = $wpdb->query($insert);
 			echo stripslashes(wpoi_get_option('wpoi_msg_sent'));
 			if ($email_notify != '') {
-				mail($email_notify, "WP Opt-in notification", "Password sent to new address\nE-mail: $email\nIP: $ip", "To: $email_notify\r\n$headers");
+				mail($email_notify, "WP Opt-in notification", "E-mail sent to new address".$lf."E-mail: ".$email.$lf."IP: $ip".$lf, "To: ".$email_notify.$lf.$headers);
 			}
 		} else {
 			echo stripslashes(wpoi_get_option('wpoi_msg_fail'));
@@ -221,7 +232,8 @@ function wpoi_get_option($option_name)
 	if ($option_name=='wpoi_msg_fail') { return "<p><b>Failed sending to e-mail address.</b></p>"; }
 	if ($option_name=='wpoi_msg_sent') { return "<p><b>Sent requested e-mail.</b></p>"; }
 
-	if ($option_name=='wpoi_form_header') { return "<div class=\"widget module\">Receive information automagically here."; }
+	if ($option_name=='wpoi_form_header') { return "<div class=\"widget modu
+le\">Receive information automagically here.</div>"; }
 	if ($option_name=='wpoi_form_footer') { return "</div>"; }
 	if ($option_name=='wpoi_form_email') { return "E-mail:"; }
 	if ($option_name=='wpoi_form_send') { return "Submit"; }
@@ -400,8 +412,7 @@ function wpoi_options()
 <tbody>
 <?php
 	$user_no=0;
-	$url = get_bloginfo('wpurl') . '/wp-admin/options-general.php?page=' .
-		basename(__FILE__) . '&user_id=';
+	$url = 'options-general.php?page=' . __FILE__ . '&user_id=';
 	foreach ($users as $user) {
 		if ($user_no&1) {
 			echo "<tr class='alternate'>";
