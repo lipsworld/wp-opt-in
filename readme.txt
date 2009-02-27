@@ -2,8 +2,8 @@
 Contributors: Petter
 Tags: email, mail, plugin, sidebar, 
 Requires at least: 2.0.2
-Tested up to: 2.5.1
-Stable tag: 1.2
+Tested up to: 2.7.1
+Stable tag: 1.3
 
 Collect e-mail addresses from users with a simple form. Send them an e-mail automagically.
 
@@ -19,7 +19,7 @@ IP address and time for submit is stored together with the e-mail address in the
 
 1. Deactivate the plugin in the WordPress 'Plugins' menu if you are upgrading
 2. Download and unzip the plugin
-3. Upload `wp-opt-in.php` to the `/wp-content/plugins/` directory
+3. Upload the `wp-opt-in` folder to the `/wp-content/plugins/` folder
 4. Active the plugin, place the widget in your sidebar and edit its title
 5. Configure the plugin in the 'WP Opt-in' menu located under the WordPress 'Options' menu
 
@@ -28,6 +28,10 @@ IP address and time for submit is stored together with the e-mail address in the
 = Can I send e-mail to all users who have asked for information through this plugin? =
 
 Yes. Simply copy all the e-mail addresses from the 'Bcc friendly format' section on the plugin options page. Paste them into the Bcc field in your favorite e-mail client software.
+
+= No e-mails are sent! Why? =
+
+Check if PHP is configured to use a working SMTP server, possibly in a file called php.ini.
 
 = What does Bcc mean? =
 
