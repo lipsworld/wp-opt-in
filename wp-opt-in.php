@@ -3,7 +3,7 @@
 Plugin Name: WP Opt-in
 Plugin URI: http://neppe.no/wordpress/wp-opt-in/
 Description: Collect e-mail addresses from users, and send them an e-mail automagically. Information can be selectively deleted or exported in an e-mail Bcc friendly format.
-Version: 1.3
+Version: 1.3.1
 Author: Petter
 Author URI: http://neppe.no/
 */
@@ -38,6 +38,7 @@ Implemented stuff:
 - Option to send notification e-mail to e.g. admin on subscription
 - Actually use the Form footer field
 - Functionality to seamlessly upgrade the database options through versions
+- Removed unnecessary code in form
 
 Won't fix with rationale:
 - Add export e-mail addresses to file possibility -> copy from bcc field and paste into file should be simple
@@ -64,7 +65,7 @@ function wpoi_show_form()
 	echo '<p>' . wpoi_get_option('wpoi_form_email');
 	echo ' <input type="text" name="wpoi_email" id="wpoi_email" /></p>' . "\n";
 	echo '<p><input type="submit" value="' . wpoi_get_option('wpoi_form_send');
-	echo '" /></p>' . "\n</form>\n<!-- Made by WP Opt-in -->\n";
+	echo '" /></p>' . "\n</form>\n";
 }
 
 function wpoi_getip()
@@ -128,7 +129,7 @@ function wpoi_opt_in()
 			echo stripslashes(wpoi_get_option('wpoi_msg_bad'));
 			wpoi_show_form();
 		}
-		elseif (mail($email, $subject, $message, "To: ".$email.$lf.$headers)) {
+		elseif (mail($email, $subject, $message, $headers)) {
 			// Delete user if already present
 			$delete = "DELETE FROM " . $table_users .
 					" WHERE email = '" . $email . "'";
