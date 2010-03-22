@@ -3,12 +3,12 @@
 Plugin Name: WP Opt-in
 Plugin URI: http://neppe.no/wordpress/wp-opt-in/
 Description: Collect e-mail addresses from users, and send them an e-mail automagically. Information can be selectively deleted or exported in an e-mail Bcc friendly format.
-Version: 1.3.1
+Version: 1.3.2-beta
 Author: Petter
 Author URI: http://neppe.no/
 */
 
-/*  Copyright 2008 Petter (http://neppe.no/)
+/*  Copyright 2008-2009 Petter (http://neppe.no/)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ Implemented stuff:
 - Actually use the Form footer field
 - Functionality to seamlessly upgrade the database options through versions
 - Removed unnecessary code in form
+- Fixed support for empty options
 
 Won't fix with rationale:
 - Add export e-mail addresses to file possibility -> copy from bcc field and paste into file should be simple
@@ -217,28 +218,23 @@ function wpoi_add_update_option($option_name, $option_value)
 
 function wpoi_get_option($option_name)
 {
-	$opt = get_option($option_name);
-	if ( $opt ) {
-		return $opt;
-	}
 	$blogname = get_option('blogname');
 
-	if ($option_name=='wpoi_widget_title') { return 'WP Opt-in'; }
+	if ($option_name=='wpoi_widget_title') { return get_option($option_name,'WP Opt-in'); }
 	if ($option_name=='wpoi_email_from') { return get_option('admin_email'); }
-	if ($option_name=='wpoi_email_subject') { return "[$blogname] Requested e-mail"; }
-	if ($option_name=='wpoi_email_message') { return "This is an automatically sent e-mail.\nYou received this because $blogname received a request."; }
-	if ($option_name=='wpoi_email_notify') { return ''; }
+	if ($option_name=='wpoi_email_subject') { return get_option($option_name,"[$blogname] Requested e-mail"); }
+	if ($option_name=='wpoi_email_message') { return get_option($option_name,"This is an automatically sent e-mail.\nYou received this because $blogname received a request."); }
+	if ($option_name=='wpoi_email_notify') { return get_option($option_name,''); }
 
-	if ($option_name=='wpoi_msg_bad') { return "<p><b>Bad e-mail address.</b></p>"; }
-	if ($option_name=='wpoi_msg_fail') { return "<p><b>Failed sending to e-mail address.</b></p>"; }
-	if ($option_name=='wpoi_msg_sent') { return "<p><b>Sent requested e-mail.</b></p>"; }
+	if ($option_name=='wpoi_msg_bad') { return get_option($option_name,"<p><b>Bad e-mail address.</b></p>"); }
+	if ($option_name=='wpoi_msg_fail') { return get_option($option_name,"<p><b>Failed sending to e-mail address.</b></p>"); }
+	if ($option_name=='wpoi_msg_sent') { return get_option($option_name,"<p><b>Sent requested e-mail.</b></p>"); }
 
-	if ($option_name=='wpoi_form_header') { return "<div class=\"widget modu
-le\">Receive information automagically here.</div>"; }
-	if ($option_name=='wpoi_form_footer') { return "</div>"; }
-	if ($option_name=='wpoi_form_email') { return "E-mail:"; }
-	if ($option_name=='wpoi_form_send') { return "Submit"; }
-	if ($option_name=='wpoi_db_version') { return "0.0"; }
+	if ($option_name=='wpoi_form_header') { return get_option($option_name,"<div class=\"widget module\">Receive information automagically here.</div>"); }
+	if ($option_name=='wpoi_form_footer') { return get_option($option_name,"</div>"); }
+	if ($option_name=='wpoi_form_email') { return get_option($option_name,"E-mail:"); }
+	if ($option_name=='wpoi_form_send') { return get_option($option_name,"Submit"); }
+	if ($option_name=='wpoi_db_version') { return get_option($option_name,"0.0"); }
 }
 
 function wpoi_options()

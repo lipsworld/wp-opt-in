@@ -2,7 +2,7 @@
 Contributors: Petter
 Tags: email, mail, plugin, sidebar, 
 Requires at least: 2.0.2
-Tested up to: 2.8.4
+Tested up to: 2.9.2
 Stable tag: 1.3.1
 
 Collect e-mail addresses from users with a simple form. Send them an e-mail automagically.
@@ -50,6 +50,9 @@ The input e-mail address is checked for suspicious characters before it's used.
 Check [the author homepage](http://neppe.no) for en example of usage.
 
 == Changelog ==
+
+= 1.3.2 =
+* Fixed support for empty options. Thanks to GirlsCanCode.
 
 = 1.3.1 =
 * Try to fix double e-mail to self.
