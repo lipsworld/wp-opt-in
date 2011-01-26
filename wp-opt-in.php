@@ -8,7 +8,7 @@ Author: Petter
 Author URI: http://neppe.no/
 */
 
-/*  Copyright 2008-2009 Petter (http://neppe.no/)
+/*  Copyright 2008-2011 Petter (http://neppe.no/)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

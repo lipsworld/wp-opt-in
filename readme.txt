@@ -39,10 +39,6 @@ Check if PHP is configured to use a working SMTP server, possibly in a file call
 
 Blind carbon copy. A receipient field for e-mail. Using it results in not revealing e-mail addresses between the recipients.
 
-= Where do I edit the title of the widget? =
-
-The widget configuration dialog can be found under the 'presentation' menu.
-
 = Why do the plugin mess up my theme when including it in the sidebar? =
 
 The options might be messed up. Try the default options:
