@@ -2,14 +2,14 @@
 Contributors: Petter
 Tags: email, mail, plugin, sidebar, 
 Requires at least: 2.0.2
-Tested up to: 2.9.2
-Stable tag: 1.3.1
+Tested up to: 3.0.1
+Stable tag: 1.3.2
 
 Collect e-mail addresses from users with a simple form. Send them an e-mail automagically.
 
 == Description ==
 
-This plugin can be used to send e-mail to users wanting specific information. The front side of the 'WP Opt-in' plugin is a simple form with an e-mail input field and a submit button. By entering an e-mail address into the field and pressing submit, an e-mail is sent automatically to the specified address.
+This plugin can be used to send e-mail to users. The front side of the 'WP Opt-in' plugin is a simple form with an e-mail input field and a submit button. By entering an e-mail address into the field and pressing submit, an e-mail is sent automatically to the specified address.
 
 The contents and sender of the automatic e-mail can be specified in options, along with whatever you would like for status messages and other text for the front side.
 
@@ -20,8 +20,10 @@ IP address and time for submit is stored together with the e-mail address in the
 1. Deactivate the plugin in the WordPress 'Plugins' menu if you are upgrading
 2. Download and unzip the plugin
 3. Upload the `wp-opt-in` folder to the `/wp-content/plugins/` folder
-4. Active the plugin, place the widget in your sidebar and edit its title
+4. Active the plugin, place the widget in your sidebar and edit its title by using the 'Presentation' menu
 5. Configure the plugin in the 'WP Opt-in' menu located under the WordPress 'Options' menu
+
+If your theme does not support widgets, you can paste `<?php if (function_exists('wpoi_opt_in')) { wpoi_opt_in(); } ?>` into your sidebar file. This file may be called 'sidebar.php' or similar.
 
 == Frequently Asked Questions ==
 
@@ -36,6 +38,22 @@ Check if PHP is configured to use a working SMTP server, possibly in a file call
 = What does Bcc mean? =
 
 Blind carbon copy. A receipient field for e-mail. Using it results in not revealing e-mail addresses between the recipients.
+
+= Where do I edit the title of the widget? =
+
+The widget configuration dialog can be found under the 'presentation' menu.
+
+= Why do the plugin mess up my theme when including it in the sidebar? =
+
+The options might be messed up. Try the default options:
+
+* Bad e-mail: `<p><b>Bad e-mail address.</b></p>`
+* Failed to send: `<p><b>Failed sending to e-mail address.</b></p>`
+* Success: `<p><b>Sent requested e-mail.</b></p>`
+* Form header: `<div class=\”widget module\”>Receive information automagically here.`
+* Form footer: `</div>`
+* E-mail field: `E-mail:`
+* Submit button: `Submit`
 
 = Can spammers use this to get me in trouble? =
 
