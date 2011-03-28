@@ -2,8 +2,8 @@
 Contributors: Petter
 Tags: email, mail, plugin, sidebar, 
 Requires at least: 2.0.2
-Tested up to: 3.0.1
-Stable tag: 1.3.2
+Tested up to: 3.1
+Stable tag: 1.4
 
 Collect e-mail addresses from users with a simple form. Send them an e-mail automagically.
 
@@ -46,7 +46,7 @@ The options might be messed up. Try the default options:
 * Bad e-mail: `<p><b>Bad e-mail address.</b></p>`
 * Failed to send: `<p><b>Failed sending to e-mail address.</b></p>`
 * Success: `<p><b>Sent requested e-mail.</b></p>`
-* Form header: `<div class=\”widget module\”>Receive information automagically here.`
+* Form header: `<div id="wpoi_form">Receive information automagically here.`
 * Form footer: `</div>`
 * E-mail field: `E-mail:`
 * Submit button: `Submit`
@@ -64,6 +64,11 @@ The input e-mail address is checked for suspicious characters before it's used.
 Check [the author homepage](http://neppe.no) for en example of usage.
 
 == Changelog ==
+
+= 1.4 =
+* Modified default options for form header for better CSS.
+* Added description to more of the options.
+* Redirect option to enable possibility for a opt-in success page.
 
 = 1.3.2 =
 * Fixed support for empty options. Thanks to GirlsCanCode.

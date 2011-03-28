@@ -91,17 +91,12 @@ function wpoi_getip()
 	return $ip_addr;
 }
 
-function wpoi_opt_in()
+$wpoi_submit_status = '';
+
+function wpoi_init_action()
 {
-	global $wpdb;
-	$table_users = $wpdb->prefix . "wpoi_users";
-
-	echo stripslashes(wpoi_get_option('wpoi_form_header'));
-
 	$_POST['wpoi_email'] = trim($_POST['wpoi_email']);
-	if(empty($_POST['wpoi_email'])) {
-		wpoi_show_form();
-	} else {
+	if(!empty($_POST['wpoi_email'])) {
 		// Linux and Windows compatibility
 		if (!defined('PHP_EOL')) {
 			if ( strtoupper(substr(PHP_OS,0,3) == 'WIN' ) ) {
@@ -112,6 +107,10 @@ function wpoi_opt_in()
 		} else {
 			$lf = PHP_EOL;
 		}
+
+		global $wpdb;
+		global $wpoi_submit_status;
+		$table_users = $wpdb->prefix . "wpoi_users";
 
 		$email = stripslashes($_POST['wpoi_email']);
 		$email_from = stripslashes(wpoi_get_option('wpoi_email_from'));
@@ -127,8 +126,7 @@ function wpoi_opt_in()
 		$headers .= "Message-ID: <".md5(uniqid(rand(),true))."@".$_SERVER['SERVER_NAME'].">".$lf;
 
 		if (!preg_match("/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/", $email)) {
-			echo stripslashes(wpoi_get_option('wpoi_msg_bad'));
-			wpoi_show_form();
+			$wpoi_submit_status = stripslashes(wpoi_get_option('wpoi_msg_bad'));
 		}
 		elseif (mail($email, $subject, $message, $headers)) {
 			// Delete user if already present
@@ -142,13 +140,30 @@ function wpoi_opt_in()
 				" (time, ip, email) " . "VALUES ('" . time() .
 				"','" . $ip . "','" . $email . "')";
 		 	$result = $wpdb->query($insert);
-			echo stripslashes(wpoi_get_option('wpoi_msg_sent'));
+			$wpoi_submit_status = stripslashes(wpoi_get_option('wpoi_msg_sent'));
 			if ($email_notify != '') {
 				mail($email_notify, "WP Opt-in notification", "E-mail sent to new address".$lf."E-mail: ".$email.$lf."IP: $ip".$lf, "To: ".$email_notify.$lf.$headers);
 			}
+
+			$url_redir = stripslashes(wpoi_get_option('wpoi_url_redir'));
+			if ($url_redir != '') {
+				wp_redirect( $url_redir );
+				exit;
+			}
 		} else {
-			echo stripslashes(wpoi_get_option('wpoi_msg_fail'));
+			$wpoi_submit_status = stripslashes(wpoi_get_option('wpoi_msg_fail'));
 		}
+	}
+}
+
+function wpoi_opt_in()
+{
+	global $wpoi_submit_status;
+
+	echo stripslashes(wpoi_get_option('wpoi_form_header'));
+	wpoi_show_form();
+	if ($wpoi_submit_status != '') {
+		echo $wpoi_submit_status;
 	}
 	echo stripslashes(wpoi_get_option('wpoi_form_footer')) . "\n";
 }
@@ -162,7 +177,7 @@ function wpoi_install()
 
 	if(($wpdb->get_var("show tables like '$table_users'") != $table_users) ||
        (wpoi_get_option("wpoi_db_version") != $wpoi_db_version)) {
-		// No configuration detaTable did not excist or ; create new
+		// Table did not excist or not compatible; create new
 		$sql = "CREATE TABLE " . $table_users . " (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			time bigint(11) DEFAULT '0' NOT NULL,
@@ -195,6 +210,8 @@ function wpoi_install()
 		wpoi_add_option('wpoi_form_footer');
 		wpoi_add_option('wpoi_form_email');
 		wpoi_add_option('wpoi_form_send');
+
+		wpoi_add_option('wpoi_url_redir');
 	}
 }
 
@@ -230,11 +247,12 @@ function wpoi_get_option($option_name)
 	if ($option_name=='wpoi_msg_fail') { return get_option($option_name,"<p><b>Failed sending to e-mail address.</b></p>"); }
 	if ($option_name=='wpoi_msg_sent') { return get_option($option_name,"<p><b>Sent requested e-mail.</b></p>"); }
 
-	if ($option_name=='wpoi_form_header') { return get_option($option_name,"<div class=\"widget module\">Receive information automagically here.</div>"); }
+	if ($option_name=='wpoi_form_header') { return get_option($option_name,"<div id=\"wpoi_form\">Receive information automagically here."); }
 	if ($option_name=='wpoi_form_footer') { return get_option($option_name,"</div>"); }
 	if ($option_name=='wpoi_form_email') { return get_option($option_name,"E-mail:"); }
 	if ($option_name=='wpoi_form_send') { return get_option($option_name,"Submit"); }
-	if ($option_name=='wpoi_db_version') { return get_option($option_name,"0.0"); }
+	if ($option_name=='wpoi_url_redir') { return get_option($option_name,""); }
+	if ($option_name=='wpoi_db_version') { return get_option($option_name,"0.2"); }
 }
 
 function wpoi_options()
@@ -272,6 +290,8 @@ function wpoi_options()
 	$form_email = stripslashes(wpoi_get_option('wpoi_form_email'));
 	$form_send = stripslashes(wpoi_get_option('wpoi_form_send'));
 
+	$url_redir = stripslashes(wpoi_get_option('wpoi_url_redir'));
+
 	// Update options if user posted new information
 	if( $_POST['wpoi_hidden'] == 'SAb13c' ) {
 		// Read from form
@@ -289,6 +309,8 @@ function wpoi_options()
 		$form_email = stripslashes($_POST['wpoi_form_email']);
 		$form_send = stripslashes($_POST['wpoi_form_send']);
 
+		$url_redir = stripslashes($_POST['wpoi_url_redir']);
+
 		// Save to database
 		wpoi_add_update_option('wpoi_email_from', $email_from );
 		wpoi_add_update_option('wpoi_email_subject', $email_subject);
@@ -303,6 +325,8 @@ function wpoi_options()
 		wpoi_add_update_option('wpoi_form_footer', $form_footer);
 		wpoi_add_update_option('wpoi_form_email', $form_email);
 		wpoi_add_update_option('wpoi_form_send', $form_send);
+
+		wpoi_add_update_option('wpoi_url_redir', $url_redir);
 
 		// Notify admin of change
 		echo '<div id="message" class="updated fade"><p><strong>';
@@ -341,14 +365,17 @@ function wpoi_options()
 <tr valign="top">
 <th width="33%" scope="row">Bad e-mail:</th><td>
 <input type="text" name="wpoi_msg_bad" id="wpoi_msg_bad" value="<?php echo $msg_bad; ?>" size="40"></td>
+<td>Error message to show the user on submit of bad e-mail address</td>
 </tr>
 <tr valign="top">
 <th width="33%" scope="row">Failed to send:</th><td>
 <input type="text" name="wpoi_msg_fail" id="wpoi_msg_fail" value="<?php echo $msg_fail; ?>" size="40"></td>
+<td>Error message to show the user on failure to send opt-in e-mail</td>
 </tr>
 <tr valign="top">
 <th width="33%" scope="row">Success:</th><td>
 <input type="text" name="wpoi_msg_sent" id="wpoi_msg_sent" value="<?php echo $msg_sent; ?>" size="40"></td>
+<td>Message to show the user on successful opt-in</td>
 </tr>
 </table>
 </fieldset>
@@ -358,18 +385,32 @@ function wpoi_options()
 <tr valign="top">
 <th width="33%" scope="row">Form header:</th><td>
 <textarea name="wpoi_form_header" id="wpoi_form_header" rows="4" cols="40"><?php echo $form_header; ?></textarea></td>
+<td>Optional HTML/CSS code before the Opt-in form</td>
 </tr>
 <tr valign="top">
 <th width="33%" scope="row">Form footer:</th><td>
 <textarea name="wpoi_form_footer" id="wpoi_form_footer" rows="2" cols="40"><?php echo $form_footer; ?></textarea></td>
+<td>Optional HTML/CSS code after the Opt-in form</td>
 </tr>
 <tr valign="top">
 <th width="33%" scope="row">E-mail field:</th><td>
 <input type="text" name="wpoi_form_email" id="wpoi_form_email" value="<?php echo $form_email; ?>" size="40"></td>
+<td>Text in front of the e-mail address input field</td>
 </tr>
 <tr valign="top">
 <th width="33%" scope="row">Submit button:</th><td>
 <input type="text" name="wpoi_form_send" id="wpoi_form_send" value="<?php echo $form_send; ?>" size="40"></td>
+<td>Text on the submit button</td>
+</tr>
+</table>
+</fieldset>
+<fieldset class="options">
+<legend>Plugin behavior</legend>
+<table width="100%" cellspacing="2" cellpadding="5" class="optiontable editform">
+<tr valign="top">
+<th width="33%" scope="row">URL redirect:</th><td>
+<input type="text" name="wpoi_url_redir" id="wpoi_url_redir" value="<?php echo $url_redir; ?>" size="40"></td>
+<td>Redirect to this URL on successful submit. Leave blank for no redirect and usage of success message.</td>
 </tr>
 </table>
 </fieldset>
@@ -480,4 +521,5 @@ function wpoi_add_to_menu() {
 register_activation_hook(__FILE__, 'wpoi_install');
 add_action('admin_menu', 'wpoi_add_to_menu');
 add_action('plugins_loaded', 'wpoi_widget_init');
+add_action('init', 'wpoi_init_action');
 ?>
