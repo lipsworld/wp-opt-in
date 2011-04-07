@@ -2,8 +2,8 @@
 Contributors: Petter
 Tags: email, mail, plugin, sidebar, 
 Requires at least: 2.0.2
-Tested up to: 3.1
-Stable tag: 1.4
+Tested up to: 3.1.1
+Stable tag: 1.4.1
 
 Collect e-mail addresses from users with a simple form. Send them an e-mail automagically.
 
@@ -64,6 +64,9 @@ The input e-mail address is checked for suspicious characters before it's used.
 Check [the author homepage](http://neppe.no) for en example of usage.
 
 == Changelog ==
+
+= 1.4.1 =
+* Fixed init action used for the redirect option.
 
 = 1.4 =
 * Modified default options for form header for better CSS.
